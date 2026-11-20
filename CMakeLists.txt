@@ -34,6 +34,16 @@ if(ENABLE_QT)
   )
 endif()
 
+# --- CamLink: FFmpeg (viene en obs-deps; en tiempo de ejecución usa las DLL que trae OBS) ---
+find_path(CAMLINK_AVCODEC_INCLUDE libavcodec/avcodec.h REQUIRED)
+find_library(CAMLINK_AVCODEC_LIB avcodec REQUIRED)
+find_library(CAMLINK_AVUTIL_LIB avutil REQUIRED)
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CAMLINK_AVCODEC_INCLUDE})
+target_link_libraries(
+  ${CMAKE_PROJECT_NAME}
+  PRIVATE ${CAMLINK_AVCODEC_LIB} ${CAMLINK_AVUTIL_LIB} $<$<PLATFORM_ID:Windows>:ws2_32>
+)
+
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE src/plugin-main.c)
 
 set_target_properties_plugin(${CMAKE_PROJECT_NAME} PROPERTIES OUTPUT_NAME ${_name})
