@@ -43,6 +43,7 @@ typedef pthread_t thread_t;
 
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 OBS_DECLARE_MODULE()
@@ -158,16 +159,43 @@ static sock_t connect_local(int port)
 
 /* ------------------------------ adb ------------------------------------- */
 
+/*
+ * Ruta de adb a usar: si el usuario dejó vacío (o "adb"), se prefiere el adb que instala
+ * el instalador de CamLink (%ProgramData%\CamLink\platform-tools\adb.exe); si no existe, "adb" del PATH.
+ */
+static void resolve_adb(const struct camlink *s, char *out, size_t cap)
+{
+	const char *p = s->adb_path ? s->adb_path : "";
+	if (*p && strcmp(p, "adb") != 0) {
+		snprintf(out, cap, "%s", p);
+		return;
+	}
+#ifdef _WIN32
+	const char *pd = getenv("ProgramData");
+	if (pd && *pd) {
+		char bundled[600];
+		snprintf(bundled, sizeof(bundled), "%s\\CamLink\\platform-tools\\adb.exe", pd);
+		if (os_file_exists(bundled)) {
+			snprintf(out, cap, "%s", bundled);
+			return;
+		}
+	}
+#endif
+	snprintf(out, cap, "adb");
+}
+
 /* Ejecuta `adb forward tcp:P tcp:P` y espera a que termine. */
 static void adb_forward(struct camlink *s)
 {
+	char adb[700];
+	resolve_adb(s, adb, sizeof(adb));
 	char cmd[1024];
-	snprintf(cmd, sizeof(cmd), "\"%s\" forward tcp:%d tcp:%d", s->adb_path, s->port, s->port);
+	snprintf(cmd, sizeof(cmd), "\"%s\" forward tcp:%d tcp:%d", adb, s->port, s->port);
 
 	os_process_pipe_t *pp = os_process_pipe_create(cmd, "r");
 	if (!pp) {
 		obs_log(LOG_WARNING, "no pude ejecutar adb (%s). Revisa la ruta de adb en las propiedades de la fuente.",
-			s->adb_path);
+			adb);
 		return;
 	}
 
@@ -377,7 +405,7 @@ static const char *camlink_name(void *unused)
 static void camlink_defaults(obs_data_t *settings)
 {
 	obs_data_set_default_int(settings, "port", DEFAULT_PORT);
-	obs_data_set_default_string(settings, "adb_path", "adb");
+	obs_data_set_default_string(settings, "adb_path", "");
 	obs_data_set_default_bool(settings, "low_latency", false);
 }
 
