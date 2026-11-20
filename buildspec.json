@@ -33,13 +33,13 @@
     },
     "platformConfig": {
         "macos": {
-            "bundleId": "com.example.plugintemplate-for-obs"
+            "bundleId": "com.camlink.obs-camlink"
         }
     },
-    "name": "plugintemplate-for-obs",
-    "displayName": "Plugin Template for OBS",
-    "version": "1.0.0",
-    "author": "Your Name Here",
-    "website": "https://example.com",
-    "email": "me@example.com"
+    "name": "obs-camlink",
+    "displayName": "CamLink",
+    "version": "0.1.0",
+    "author": "Carlos",
+    "website": "https://github.com",
+    "email": "nobody@example.com"
 }
